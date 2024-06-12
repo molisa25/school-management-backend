@@ -1,0 +1,107 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Department {
+  id            String    @id @default(uuid())
+  name          String    @unique
+  description   String
+  courses       Course[]
+  staffs        Staff[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Staff {
+  id            String      @id @default(uuid())
+  firstName     String
+  lastName      String
+  title         String
+  departmentId  String
+  department    Department  @relation(fields: [departmentId], references: [id])
+  staffs        ModuleStaff[]
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+model Course {
+  id            String      @id @default(uuid())
+  name          String      @unique
+  description   String
+  departmentId  String
+  maxUnit       Int
+  department    Department  @relation(fields: [departmentId], references: [id])
+  modules       Module[]
+  students      Enrolment[]
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+model Module {
+  id            String      @id @default(uuid())
+  code          String      @unique
+  title         String
+  description   String
+  content       String
+  courseId      String
+  unit          Int
+  course        Course      @relation(fields: [courseId], references: [id])
+  staffs        ModuleStaff[]
+  students      UserModule[]
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+model ModuleStaff {
+  id            String      @id @default(uuid())
+  moduleId      String
+  staffId       String
+  module        Module      @relation(fields: [moduleId], references: [id])
+  staff         Staff       @relation(fields: [staffId], references: [id])
+
+  @@unique([moduleId, staffId])
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+model User {
+  id            String      @id @default(uuid())
+  firstName     String
+  lastName      String
+  email         String      @unique
+  role          UserRole    @default(USER)
+  password      String
+  enrolments    Enrolment[]
+  userModules   UserModule[]
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+model Enrolment {
+  id            String      @id @default(uuid())
+  userId        String
+  courseId      String
+  user          User        @relation(fields: [userId], references: [id])
+  course        Course      @relation(fields: [courseId], references: [id])
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+model UserModule {
+  id            String      @id @default(uuid())
+  userId        String
+  moduleCode    String
+  user          User        @relation(fields: [userId], references: [id])
+  module        Module      @relation(fields: [moduleCode], references: [code])
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
